@@ -1,0 +1,1172 @@
+   0  $accept : program $end
+
+   1  $$1 :
+
+   2  program : $$1 PROGRAM ID '(' identifier_list ')' ';' declarations subprogram_declarations compound_statement '.'
+
+   3  identifier_list : ID
+   4                  | identifier_list ',' ID
+
+   5  declarations : declarations VAR identifier_list ':' type ';'
+   6               |
+
+   7  type : standard_type
+   8       | ARRAY '[' INUM DOTDOT INUM ']' OF standard_type
+
+   9  standard_type : INTEGER
+  10                | REAL
+
+  11  subprogram_declarations : subprogram_declarations subprogram_declaration ';'
+  12                          |
+
+  13  subprogram_declaration : subprogram_head declarations subprogram_declarations compound_statement
+
+  14  subprogram_head : FUNCTION ID arguments ':' standard_type ';'
+  15                  | PROCEDURE ID arguments ';'
+
+  16  arguments : '(' parameter_list ')'
+  17            |
+
+  18  parameter_list : identifier_list ':' type
+  19                 | parameter_list ';' identifier_list ':' type
+
+  20  compound_statement : BBEGIN optional_statements END
+
+  21  optional_statements : statement_list
+  22                      |
+
+  23  statement_list : statement
+  24                 | statement_list ';' statement
+
+  25  statement : variable ASSIGNOP expression
+  26            | procedure_statement
+  27            | compound_statement
+  28            | IF expression THEN statement ELSE statement
+  29            | IF expression THEN statement
+  30            | WHILE expression DO statement
+
+  31  variable : ID
+  32           | ID '[' expression ']'
+
+  33  procedure_statement : ID
+  34                      | ID '(' expression_list ')'
+
+  35  expression_list : expression
+  36                  | expression_list ',' expression
+
+  37  expression : simple_expression
+  38             | simple_expression RELOP simple_expression
+
+  39  simple_expression : term
+  40                    | ADDOP term
+  41                    | simple_expression ADDOP term
+
+  42  term : factor
+  43       | term MULOP factor
+
+  44  factor : ID
+  45         | ID '(' expression_list ')'
+  46         | ID '[' expression ']'
+  47         | INUM
+  48         | RNUM
+  49         | '(' expression ')'
+  50         | NOT factor
+
+state 0
+	$accept : . program $end  (0)
+	$$1 : .  (1)
+
+	.  reduce 1
+
+	program  goto 1
+	$$1  goto 2
+
+
+state 1
+	$accept : program . $end  (0)
+
+	$end  accept
+
+
+state 2
+	program : $$1 . PROGRAM ID '(' identifier_list ')' ';' declarations subprogram_declarations compound_statement '.'  (2)
+
+	PROGRAM  shift 3
+	.  error
+
+
+state 3
+	program : $$1 PROGRAM . ID '(' identifier_list ')' ';' declarations subprogram_declarations compound_statement '.'  (2)
+
+	ID  shift 4
+	.  error
+
+
+state 4
+	program : $$1 PROGRAM ID . '(' identifier_list ')' ';' declarations subprogram_declarations compound_statement '.'  (2)
+
+	'('  shift 5
+	.  error
+
+
+state 5
+	program : $$1 PROGRAM ID '(' . identifier_list ')' ';' declarations subprogram_declarations compound_statement '.'  (2)
+
+	ID  shift 6
+	.  error
+
+	identifier_list  goto 7
+
+
+state 6
+	identifier_list : ID .  (3)
+
+	.  reduce 3
+
+
+state 7
+	program : $$1 PROGRAM ID '(' identifier_list . ')' ';' declarations subprogram_declarations compound_statement '.'  (2)
+	identifier_list : identifier_list . ',' ID  (4)
+
+	')'  shift 8
+	','  shift 9
+	.  error
+
+
+state 8
+	program : $$1 PROGRAM ID '(' identifier_list ')' . ';' declarations subprogram_declarations compound_statement '.'  (2)
+
+	';'  shift 10
+	.  error
+
+
+state 9
+	identifier_list : identifier_list ',' . ID  (4)
+
+	ID  shift 11
+	.  error
+
+
+state 10
+	program : $$1 PROGRAM ID '(' identifier_list ')' ';' . declarations subprogram_declarations compound_statement '.'  (2)
+	declarations : .  (6)
+
+	.  reduce 6
+
+	declarations  goto 12
+
+
+state 11
+	identifier_list : identifier_list ',' ID .  (4)
+
+	.  reduce 4
+
+
+state 12
+	program : $$1 PROGRAM ID '(' identifier_list ')' ';' declarations . subprogram_declarations compound_statement '.'  (2)
+	declarations : declarations . VAR identifier_list ':' type ';'  (5)
+	subprogram_declarations : .  (12)
+
+	VAR  shift 13
+	BBEGIN  reduce 12
+	PROCEDURE  reduce 12
+	FUNCTION  reduce 12
+
+	subprogram_declarations  goto 14
+
+
+state 13
+	declarations : declarations VAR . identifier_list ':' type ';'  (5)
+
+	ID  shift 6
+	.  error
+
+	identifier_list  goto 15
+
+
+state 14
+	program : $$1 PROGRAM ID '(' identifier_list ')' ';' declarations subprogram_declarations . compound_statement '.'  (2)
+	subprogram_declarations : subprogram_declarations . subprogram_declaration ';'  (11)
+
+	BBEGIN  shift 16
+	PROCEDURE  shift 17
+	FUNCTION  shift 18
+	.  error
+
+	subprogram_declaration  goto 19
+	subprogram_head  goto 20
+	compound_statement  goto 21
+
+
+state 15
+	identifier_list : identifier_list . ',' ID  (4)
+	declarations : declarations VAR identifier_list . ':' type ';'  (5)
+
+	','  shift 9
+	':'  shift 22
+	.  error
+
+
+state 16
+	compound_statement : BBEGIN . optional_statements END  (20)
+	optional_statements : .  (22)
+
+	BBEGIN  shift 16
+	IF  shift 23
+	WHILE  shift 24
+	ID  shift 25
+	END  reduce 22
+
+	compound_statement  goto 26
+	optional_statements  goto 27
+	statement_list  goto 28
+	statement  goto 29
+	variable  goto 30
+	procedure_statement  goto 31
+
+
+state 17
+	subprogram_head : PROCEDURE . ID arguments ';'  (15)
+
+	ID  shift 32
+	.  error
+
+
+state 18
+	subprogram_head : FUNCTION . ID arguments ':' standard_type ';'  (14)
+
+	ID  shift 33
+	.  error
+
+
+state 19
+	subprogram_declarations : subprogram_declarations subprogram_declaration . ';'  (11)
+
+	';'  shift 34
+	.  error
+
+
+state 20
+	subprogram_declaration : subprogram_head . declarations subprogram_declarations compound_statement  (13)
+	declarations : .  (6)
+
+	.  reduce 6
+
+	declarations  goto 35
+
+
+state 21
+	program : $$1 PROGRAM ID '(' identifier_list ')' ';' declarations subprogram_declarations compound_statement . '.'  (2)
+
+	'.'  shift 36
+	.  error
+
+
+state 22
+	declarations : declarations VAR identifier_list ':' . type ';'  (5)
+
+	INTEGER  shift 37
+	REAL  shift 38
+	ARRAY  shift 39
+	.  error
+
+	type  goto 40
+	standard_type  goto 41
+
+
+state 23
+	statement : IF . expression THEN statement ELSE statement  (28)
+	statement : IF . expression THEN statement  (29)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	expression  goto 48
+	simple_expression  goto 49
+	term  goto 50
+	factor  goto 51
+
+
+state 24
+	statement : WHILE . expression DO statement  (30)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	expression  goto 52
+	simple_expression  goto 49
+	term  goto 50
+	factor  goto 51
+
+
+state 25
+	variable : ID .  (31)
+	variable : ID . '[' expression ']'  (32)
+	procedure_statement : ID .  (33)
+	procedure_statement : ID . '(' expression_list ')'  (34)
+
+	'('  shift 53
+	'['  shift 54
+	END  reduce 33
+	ASSIGNOP  reduce 31
+	ELSE  reduce 33
+	';'  reduce 33
+
+
+state 26
+	statement : compound_statement .  (27)
+
+	.  reduce 27
+
+
+state 27
+	compound_statement : BBEGIN optional_statements . END  (20)
+
+	END  shift 55
+	.  error
+
+
+state 28
+	optional_statements : statement_list .  (21)
+	statement_list : statement_list . ';' statement  (24)
+
+	';'  shift 56
+	END  reduce 21
+
+
+state 29
+	statement_list : statement .  (23)
+
+	.  reduce 23
+
+
+state 30
+	statement : variable . ASSIGNOP expression  (25)
+
+	ASSIGNOP  shift 57
+	.  error
+
+
+state 31
+	statement : procedure_statement .  (26)
+
+	.  reduce 26
+
+
+state 32
+	subprogram_head : PROCEDURE ID . arguments ';'  (15)
+	arguments : .  (17)
+
+	'('  shift 58
+	';'  reduce 17
+
+	arguments  goto 59
+
+
+state 33
+	subprogram_head : FUNCTION ID . arguments ':' standard_type ';'  (14)
+	arguments : .  (17)
+
+	'('  shift 58
+	':'  reduce 17
+
+	arguments  goto 60
+
+
+state 34
+	subprogram_declarations : subprogram_declarations subprogram_declaration ';' .  (11)
+
+	.  reduce 11
+
+
+state 35
+	declarations : declarations . VAR identifier_list ':' type ';'  (5)
+	subprogram_declaration : subprogram_head declarations . subprogram_declarations compound_statement  (13)
+	subprogram_declarations : .  (12)
+
+	VAR  shift 13
+	BBEGIN  reduce 12
+	PROCEDURE  reduce 12
+	FUNCTION  reduce 12
+
+	subprogram_declarations  goto 61
+
+
+state 36
+	program : $$1 PROGRAM ID '(' identifier_list ')' ';' declarations subprogram_declarations compound_statement '.' .  (2)
+
+	.  reduce 2
+
+
+state 37
+	standard_type : INTEGER .  (9)
+
+	.  reduce 9
+
+
+state 38
+	standard_type : REAL .  (10)
+
+	.  reduce 10
+
+
+state 39
+	type : ARRAY . '[' INUM DOTDOT INUM ']' OF standard_type  (8)
+
+	'['  shift 62
+	.  error
+
+
+state 40
+	declarations : declarations VAR identifier_list ':' type . ';'  (5)
+
+	';'  shift 63
+	.  error
+
+
+state 41
+	type : standard_type .  (7)
+
+	.  reduce 7
+
+
+state 42
+	factor : NOT . factor  (50)
+
+	NOT  shift 42
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	factor  goto 64
+
+
+state 43
+	simple_expression : ADDOP . term  (40)
+
+	NOT  shift 42
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	term  goto 65
+	factor  goto 51
+
+
+state 44
+	factor : ID .  (44)
+	factor : ID . '(' expression_list ')'  (45)
+	factor : ID . '[' expression ']'  (46)
+
+	'('  shift 66
+	'['  shift 67
+	END  reduce 44
+	THEN  reduce 44
+	ELSE  reduce 44
+	DO  reduce 44
+	MULOP  reduce 44
+	RELOP  reduce 44
+	ADDOP  reduce 44
+	')'  reduce 44
+	';'  reduce 44
+	','  reduce 44
+	']'  reduce 44
+
+
+state 45
+	factor : INUM .  (47)
+
+	.  reduce 47
+
+
+state 46
+	factor : RNUM .  (48)
+
+	.  reduce 48
+
+
+state 47
+	factor : '(' . expression ')'  (49)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	expression  goto 68
+	simple_expression  goto 49
+	term  goto 50
+	factor  goto 51
+
+
+state 48
+	statement : IF expression . THEN statement ELSE statement  (28)
+	statement : IF expression . THEN statement  (29)
+
+	THEN  shift 69
+	.  error
+
+
+state 49
+	expression : simple_expression .  (37)
+	expression : simple_expression . RELOP simple_expression  (38)
+	simple_expression : simple_expression . ADDOP term  (41)
+
+	RELOP  shift 70
+	ADDOP  shift 71
+	END  reduce 37
+	THEN  reduce 37
+	ELSE  reduce 37
+	DO  reduce 37
+	')'  reduce 37
+	';'  reduce 37
+	','  reduce 37
+	']'  reduce 37
+
+
+state 50
+	simple_expression : term .  (39)
+	term : term . MULOP factor  (43)
+
+	MULOP  shift 72
+	END  reduce 39
+	THEN  reduce 39
+	ELSE  reduce 39
+	DO  reduce 39
+	RELOP  reduce 39
+	ADDOP  reduce 39
+	')'  reduce 39
+	';'  reduce 39
+	','  reduce 39
+	']'  reduce 39
+
+
+state 51
+	term : factor .  (42)
+
+	.  reduce 42
+
+
+state 52
+	statement : WHILE expression . DO statement  (30)
+
+	DO  shift 73
+	.  error
+
+
+state 53
+	procedure_statement : ID '(' . expression_list ')'  (34)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	expression_list  goto 74
+	expression  goto 75
+	simple_expression  goto 49
+	term  goto 50
+	factor  goto 51
+
+
+state 54
+	variable : ID '[' . expression ']'  (32)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	expression  goto 76
+	simple_expression  goto 49
+	term  goto 50
+	factor  goto 51
+
+
+state 55
+	compound_statement : BBEGIN optional_statements END .  (20)
+
+	.  reduce 20
+
+
+state 56
+	statement_list : statement_list ';' . statement  (24)
+
+	BBEGIN  shift 16
+	IF  shift 23
+	WHILE  shift 24
+	ID  shift 25
+	.  error
+
+	compound_statement  goto 26
+	statement  goto 77
+	variable  goto 30
+	procedure_statement  goto 31
+
+
+state 57
+	statement : variable ASSIGNOP . expression  (25)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	expression  goto 78
+	simple_expression  goto 49
+	term  goto 50
+	factor  goto 51
+
+
+state 58
+	arguments : '(' . parameter_list ')'  (16)
+
+	ID  shift 6
+	.  error
+
+	identifier_list  goto 79
+	parameter_list  goto 80
+
+
+state 59
+	subprogram_head : PROCEDURE ID arguments . ';'  (15)
+
+	';'  shift 81
+	.  error
+
+
+state 60
+	subprogram_head : FUNCTION ID arguments . ':' standard_type ';'  (14)
+
+	':'  shift 82
+	.  error
+
+
+state 61
+	subprogram_declarations : subprogram_declarations . subprogram_declaration ';'  (11)
+	subprogram_declaration : subprogram_head declarations subprogram_declarations . compound_statement  (13)
+
+	BBEGIN  shift 16
+	PROCEDURE  shift 17
+	FUNCTION  shift 18
+	.  error
+
+	subprogram_declaration  goto 19
+	subprogram_head  goto 20
+	compound_statement  goto 83
+
+
+state 62
+	type : ARRAY '[' . INUM DOTDOT INUM ']' OF standard_type  (8)
+
+	INUM  shift 84
+	.  error
+
+
+state 63
+	declarations : declarations VAR identifier_list ':' type ';' .  (5)
+
+	.  reduce 5
+
+
+state 64
+	factor : NOT factor .  (50)
+
+	.  reduce 50
+
+
+state 65
+	simple_expression : ADDOP term .  (40)
+	term : term . MULOP factor  (43)
+
+	MULOP  shift 72
+	END  reduce 40
+	THEN  reduce 40
+	ELSE  reduce 40
+	DO  reduce 40
+	RELOP  reduce 40
+	ADDOP  reduce 40
+	')'  reduce 40
+	';'  reduce 40
+	','  reduce 40
+	']'  reduce 40
+
+
+state 66
+	factor : ID '(' . expression_list ')'  (45)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	expression_list  goto 85
+	expression  goto 75
+	simple_expression  goto 49
+	term  goto 50
+	factor  goto 51
+
+
+state 67
+	factor : ID '[' . expression ']'  (46)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	expression  goto 86
+	simple_expression  goto 49
+	term  goto 50
+	factor  goto 51
+
+
+state 68
+	factor : '(' expression . ')'  (49)
+
+	')'  shift 87
+	.  error
+
+
+state 69
+	statement : IF expression THEN . statement ELSE statement  (28)
+	statement : IF expression THEN . statement  (29)
+
+	BBEGIN  shift 16
+	IF  shift 23
+	WHILE  shift 24
+	ID  shift 25
+	.  error
+
+	compound_statement  goto 26
+	statement  goto 88
+	variable  goto 30
+	procedure_statement  goto 31
+
+
+state 70
+	expression : simple_expression RELOP . simple_expression  (38)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	simple_expression  goto 89
+	term  goto 50
+	factor  goto 51
+
+
+state 71
+	simple_expression : simple_expression ADDOP . term  (41)
+
+	NOT  shift 42
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	term  goto 90
+	factor  goto 51
+
+
+state 72
+	term : term MULOP . factor  (43)
+
+	NOT  shift 42
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	factor  goto 91
+
+
+state 73
+	statement : WHILE expression DO . statement  (30)
+
+	BBEGIN  shift 16
+	IF  shift 23
+	WHILE  shift 24
+	ID  shift 25
+	.  error
+
+	compound_statement  goto 26
+	statement  goto 92
+	variable  goto 30
+	procedure_statement  goto 31
+
+
+state 74
+	procedure_statement : ID '(' expression_list . ')'  (34)
+	expression_list : expression_list . ',' expression  (36)
+
+	')'  shift 93
+	','  shift 94
+	.  error
+
+
+state 75
+	expression_list : expression .  (35)
+
+	.  reduce 35
+
+
+state 76
+	variable : ID '[' expression . ']'  (32)
+
+	']'  shift 95
+	.  error
+
+
+state 77
+	statement_list : statement_list ';' statement .  (24)
+
+	.  reduce 24
+
+
+state 78
+	statement : variable ASSIGNOP expression .  (25)
+
+	.  reduce 25
+
+
+state 79
+	identifier_list : identifier_list . ',' ID  (4)
+	parameter_list : identifier_list . ':' type  (18)
+
+	','  shift 9
+	':'  shift 96
+	.  error
+
+
+state 80
+	arguments : '(' parameter_list . ')'  (16)
+	parameter_list : parameter_list . ';' identifier_list ':' type  (19)
+
+	')'  shift 97
+	';'  shift 98
+	.  error
+
+
+state 81
+	subprogram_head : PROCEDURE ID arguments ';' .  (15)
+
+	.  reduce 15
+
+
+state 82
+	subprogram_head : FUNCTION ID arguments ':' . standard_type ';'  (14)
+
+	INTEGER  shift 37
+	REAL  shift 38
+	.  error
+
+	standard_type  goto 99
+
+
+state 83
+	subprogram_declaration : subprogram_head declarations subprogram_declarations compound_statement .  (13)
+
+	.  reduce 13
+
+
+state 84
+	type : ARRAY '[' INUM . DOTDOT INUM ']' OF standard_type  (8)
+
+	DOTDOT  shift 100
+	.  error
+
+
+state 85
+	expression_list : expression_list . ',' expression  (36)
+	factor : ID '(' expression_list . ')'  (45)
+
+	')'  shift 101
+	','  shift 94
+	.  error
+
+
+state 86
+	factor : ID '[' expression . ']'  (46)
+
+	']'  shift 102
+	.  error
+
+
+state 87
+	factor : '(' expression ')' .  (49)
+
+	.  reduce 49
+
+
+state 88
+	statement : IF expression THEN statement . ELSE statement  (28)
+	statement : IF expression THEN statement .  (29)
+
+	ELSE  shift 103
+	END  reduce 29
+	';'  reduce 29
+
+
+state 89
+	expression : simple_expression RELOP simple_expression .  (38)
+	simple_expression : simple_expression . ADDOP term  (41)
+
+	ADDOP  shift 71
+	END  reduce 38
+	THEN  reduce 38
+	ELSE  reduce 38
+	DO  reduce 38
+	')'  reduce 38
+	';'  reduce 38
+	','  reduce 38
+	']'  reduce 38
+
+
+state 90
+	simple_expression : simple_expression ADDOP term .  (41)
+	term : term . MULOP factor  (43)
+
+	MULOP  shift 72
+	END  reduce 41
+	THEN  reduce 41
+	ELSE  reduce 41
+	DO  reduce 41
+	RELOP  reduce 41
+	ADDOP  reduce 41
+	')'  reduce 41
+	';'  reduce 41
+	','  reduce 41
+	']'  reduce 41
+
+
+state 91
+	term : term MULOP factor .  (43)
+
+	.  reduce 43
+
+
+state 92
+	statement : WHILE expression DO statement .  (30)
+
+	.  reduce 30
+
+
+state 93
+	procedure_statement : ID '(' expression_list ')' .  (34)
+
+	.  reduce 34
+
+
+state 94
+	expression_list : expression_list ',' . expression  (36)
+
+	NOT  shift 42
+	ADDOP  shift 43
+	ID  shift 44
+	INUM  shift 45
+	RNUM  shift 46
+	'('  shift 47
+	.  error
+
+	expression  goto 104
+	simple_expression  goto 49
+	term  goto 50
+	factor  goto 51
+
+
+state 95
+	variable : ID '[' expression ']' .  (32)
+
+	.  reduce 32
+
+
+state 96
+	parameter_list : identifier_list ':' . type  (18)
+
+	INTEGER  shift 37
+	REAL  shift 38
+	ARRAY  shift 39
+	.  error
+
+	type  goto 105
+	standard_type  goto 41
+
+
+state 97
+	arguments : '(' parameter_list ')' .  (16)
+
+	.  reduce 16
+
+
+state 98
+	parameter_list : parameter_list ';' . identifier_list ':' type  (19)
+
+	ID  shift 6
+	.  error
+
+	identifier_list  goto 106
+
+
+state 99
+	subprogram_head : FUNCTION ID arguments ':' standard_type . ';'  (14)
+
+	';'  shift 107
+	.  error
+
+
+state 100
+	type : ARRAY '[' INUM DOTDOT . INUM ']' OF standard_type  (8)
+
+	INUM  shift 108
+	.  error
+
+
+state 101
+	factor : ID '(' expression_list ')' .  (45)
+
+	.  reduce 45
+
+
+state 102
+	factor : ID '[' expression ']' .  (46)
+
+	.  reduce 46
+
+
+state 103
+	statement : IF expression THEN statement ELSE . statement  (28)
+
+	BBEGIN  shift 16
+	IF  shift 23
+	WHILE  shift 24
+	ID  shift 25
+	.  error
+
+	compound_statement  goto 26
+	statement  goto 109
+	variable  goto 30
+	procedure_statement  goto 31
+
+
+state 104
+	expression_list : expression_list ',' expression .  (36)
+
+	.  reduce 36
+
+
+state 105
+	parameter_list : identifier_list ':' type .  (18)
+
+	.  reduce 18
+
+
+state 106
+	identifier_list : identifier_list . ',' ID  (4)
+	parameter_list : parameter_list ';' identifier_list . ':' type  (19)
+
+	','  shift 9
+	':'  shift 110
+	.  error
+
+
+state 107
+	subprogram_head : FUNCTION ID arguments ':' standard_type ';' .  (14)
+
+	.  reduce 14
+
+
+state 108
+	type : ARRAY '[' INUM DOTDOT INUM . ']' OF standard_type  (8)
+
+	']'  shift 111
+	.  error
+
+
+state 109
+	statement : IF expression THEN statement ELSE statement .  (28)
+
+	.  reduce 28
+
+
+state 110
+	parameter_list : parameter_list ';' identifier_list ':' . type  (19)
+
+	INTEGER  shift 37
+	REAL  shift 38
+	ARRAY  shift 39
+	.  error
+
+	type  goto 112
+	standard_type  goto 41
+
+
+state 111
+	type : ARRAY '[' INUM DOTDOT INUM ']' . OF standard_type  (8)
+
+	OF  shift 113
+	.  error
+
+
+state 112
+	parameter_list : parameter_list ';' identifier_list ':' type .  (19)
+
+	.  reduce 19
+
+
+state 113
+	type : ARRAY '[' INUM DOTDOT INUM ']' OF . standard_type  (8)
+
+	INTEGER  shift 37
+	REAL  shift 38
+	.  error
+
+	standard_type  goto 114
+
+
+state 114
+	type : ARRAY '[' INUM DOTDOT INUM ']' OF standard_type .  (8)
+
+	.  reduce 8
+
+
+62 terminals, 23 nonterminals
+51 grammar rules, 115 states
