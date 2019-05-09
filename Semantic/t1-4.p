@@ -2,8 +2,11 @@
 program main( input, output );
   procedure boo;
     procedure foo;
+	  procedure goo;
+	  begin
+	  end;
     begin
-    end;
+	end;
   begin
     foo
   end;

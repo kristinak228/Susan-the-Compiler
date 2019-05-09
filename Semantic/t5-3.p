@@ -7,12 +7,7 @@ program main( input, output );
 
   function foo(a: integer; x: real): integer;
   begin
-    foo := a
   end;
 begin
-  b := foo(y,b) + foo(b,y,10)
+  foo(b,4)
 end.
-
-
-
-

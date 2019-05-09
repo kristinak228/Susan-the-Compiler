@@ -6,24 +6,27 @@
 
 	#include "tree.h"
 	#include "scope.h"
-	#include "y.tab.h"
+	#include "node_types.h"
+	#include "y.tab.h"	
 
 	extern int yyerror(char*);
 	extern int yylex();
 
-	extern scope_t *top_scope;
-
-	/*#define ECHO 1*/
+	extern scope_t *top_scope, *tmp_scope;
+	extern node_t *tmp;
+	extern int line_number;
 
 %}
 
 %union {
-	int iVal; 		/* NUM */
-	float rVal; 	/* RNUM */
-	int opVal; 		/* RELOP ADDOP MULOP */
+	/* Scanner */
+	int iVal; 			/* INUM */
+	float rVal; 		/* RNUM */
+	int opVal; 			/* RELOP ADDOP MULOP */
 	char *sVal; 	/* ID */
 	
-	tree_t *tVal;	/* Symantics */
+	/* Semantics */
+	tree_t *tVal;	
 }
 
 %token PROGRAM PROGRAM_ROOT PROGRAM_NODE
@@ -31,7 +34,7 @@
 %token BBEGIN END		
 %token PROCEDURE FUNCTION		
 %token IDENT
-%token INTEGER REAL				
+%token INTEGER REAL 
 %token ARRAY OF
 %token ASSIGNOP
 %token RESULT
@@ -45,11 +48,11 @@
 %token FOR TO
 %token IF THEN ELSE 
 %token WHILE DO
-
 %token ARRAY_ACCESS
 %token FUNCTION_CALL
 %token PROCEDURE_CALL
 %token COMMA
+%token LINK	
 
 %token <opVal> MULOP 
 %token <opVal> RELOP
@@ -63,7 +66,7 @@
 %type <tVal> identifier_list
 %type <tVal> declarations
 %type <tVal> type
-%type <tVal> standard_type
+%type <iVal> standard_type
 %type <tVal> subprogram_declarations
 %type <tVal> subprogram_declaration
 %type <tVal> subprogram_head
@@ -80,7 +83,6 @@
 %type <tVal> simple_expression
 %type <tVal> term
 %type <tVal> factor
-
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 
@@ -100,14 +102,8 @@ program
 identifier_list
 	: ID
 		{ 
-/*
-If local objects hide non-local objects with the same name, don't I only need to 
-check that it's not within the same scope? How do I ensure my program takes the 
-most local object?
-*/
-
 			scope_redefinition(top_scope, $1);
-			$$ = mkid(scope_insert(top_scope, $1)); 
+			$$ = mkid(scope_insert(top_scope, $1));
 		}
 	| identifier_list ',' ID
 		{ 
@@ -118,64 +114,101 @@ most local object?
 
 declarations
 	: declarations VAR identifier_list ':' type ';'
-		{ /*add_type_information($3, $5);*/ $$ = NULL; } 
+		{  
+			set_type($3, $5);
+			$$ = $3;
+		} 
 	| /* empty */
 		{ $$ = NULL; }
 	; 
 
-type
+type 
 	: standard_type
-		{ $$ = NULL; }
+		{ $$ = mktree($1, NULL, NULL); }
 	| ARRAY '[' INUM DOTDOT INUM ']' OF standard_type
-		{ $$ = NULL; }
+		{ $$ = mktree($8, mkinum($3), mkinum($5)); }
+	| ARRAY '[' INUM DOTDOT INUM ',' INUM DOTDOT INUM ']' OF standard_type
+		{ 
+			$$ = mktree($12, mktree(DOTDOT, mkinum($3), mkinum($5)), \
+				mktree(DOTDOT, mkinum($7), mkinum($9))); 
+		}
 	;
 
 standard_type
-	: INTEGER
-		{ $$ = NULL; }
-	| REAL
-		{ $$ = NULL; }
+	: INTEGER 	{ $$ = INUM; }
+	| REAL		{ $$ = RNUM; }
 	;
 
 subprogram_declarations
 	: subprogram_declarations subprogram_declaration ';'
+		{ /* Don't need to do anything here */ }
 	| /* empty */
 		{ $$ = NULL; }
 	;
 
 subprogram_declaration
 	: subprogram_head declarations subprogram_declarations compound_statement
-		{ pop_scope(top_scope); }
+		{
+			top_scope = pop_scope(top_scope);
+		}
 	;
 
-subprogram_head
-	: FUNCTION ID arguments ':' standard_type ';'
-		{ $$ = NULL; }
-	| PROCEDURE ID arguments ';'
-		{ $$ = NULL; }
+subprogram_head 
+	: FUNCTION ID 
+		{	
+			scope_redefinition(top_scope, $2);
+			tmp = scope_insert(top_scope, $2); /* Quick copy to use below */
+			mkid(tmp);
+			tmp_scope = top_scope;  /* Quick copy to use below */
+			top_scope = push_scope(top_scope);
+		}
+	arguments ':' standard_type ';'
+		{ 
+			set_func_return_type(tmp_scope, $2, $6);
+			if($4 != NULL) add_args(tmp, $4);
+			$$ = mktree(FUNCTION_CALL, mkid(scope_search_all(top_scope, $2)), $4);
+		}
+	| PROCEDURE ID 
+		{
+			scope_redefinition(top_scope, $2);
+			tmp = scope_insert(top_scope, $2); /* Quick copy to use below */
+			mkid(tmp);
+			top_scope = push_scope(top_scope);
+		}
+	arguments ';' 
+		{
+			if($4 != NULL) add_args(tmp, $4);
+			$$ = mktree(PROCEDURE_CALL, mkid(scope_search_all(top_scope, $2)), $4);
+		}
 	;
 
 arguments
 	: '(' parameter_list ')'
-		{ $$ = NULL; }
+		{ $$ = $2; }
 	| /* empty */
 		{ $$ = NULL; }
 	;
 
 parameter_list
 	: identifier_list ':' type
-		{ $$ = NULL; }
+		{ 
+			set_type($1, $3);
+			$$ = $1; 
+		}
 	| parameter_list ';' identifier_list ':' type
-		{ $$ = NULL; }
+		{
+			set_type($3, $5);
+			$$ = mktree(COMMA, $1, $3); 
+		}
 	;
 
 compound_statement
 	: BBEGIN optional_statements END
 		{
 			$$ = $2;
-			fprintf(stderr, "BEGIN TREE PRINT\n\n");
+			fprintf(stderr, "\nBEGIN TREE PRINT\n\n");
 			tree_print($$);
-			fprintf(stderr, "END TREE PRINT\n\n");
+			fprintf(stderr, "\nEND TREE PRINT\n\n");	
 		}
 	;
 
@@ -190,8 +223,13 @@ statement_list
 	;
 
 statement
+	/* Do I need to include 'ELSE' & 'DO' in my print tree? should I 
+		add them to the mktree function calls here? */
 	: variable ASSIGNOP expression 
-		{ $$ = mktree(ASSIGNOP, $1, $3); }
+		{
+			compare_types($1, $3);
+			$$ = mktree(ASSIGNOP, $1, $3); 
+		}
 	| procedure_statement 
 		{ $$ = $1; }
 	| compound_statement  
@@ -200,6 +238,8 @@ statement
 		{ $$ = mktree(IF, $2, mktree(THEN, $4, $6)); }
 	| IF expression THEN statement %prec LOWER_THAN_ELSE
 		{ $$ = mktree(IF, $2, mktree(THEN, $4, NULL)); }
+	| FOR statement TO simple_expression DO statement
+		{ $$ = mktree(FOR, $2, mktree(TO, $4, $6)); }
 	| WHILE expression DO statement
 		{ $$ = mktree(WHILE, $2, $4); }
 	;
@@ -207,17 +247,41 @@ statement
 variable
 	: ID 
 		{
+			if(!scope_is_defined(top_scope, $1)) 
+				yyerror("object is not defined within scope\n");
 			$$ = mkid(scope_search_all(top_scope, $1)); 
 		}
-	| ID '[' expression ']'
-		{ $$ = mktree(ARRAY_ACCESS, mkid(scope_search_all(top_scope, $1)), $3); }
+	/* left-side of assignment operator */
+	| ID '[' expression_list ']'
+		{ 
+			int i = 0;	
+			if(!scope_is_defined(top_scope, $1)) 
+				yyerror("object is not defined within scope\n");
+			check_array_index(top_scope, $1, $3, &i);
+			$$ = mktree(ARRAY_ACCESS, mkid(scope_search_all(top_scope, $1)), $3); 
+		}
 	;
 
 procedure_statement
-	: ID { $$ = mkid(scope_search_all(top_scope, $1)); }
+	: ID
+		{ 
+			int i = 1;
+			if(!scope_is_defined(top_scope, $1)) 
+				yyerror("object is not defined within scope\n");
+			check_arguments(top_scope, $1, NULL, &i);
+			$$ = mkid(scope_search_all(top_scope, $1)); 
+		}
 	| ID '(' expression_list ')'
-		{ $$ = mktree(PROCEDURE_CALL, mkid(scope_search_all(top_scope, $1)), $3); }
+		{
+			int i = 1;
+			if(!scope_is_defined(top_scope, $1)) 
+				yyerror("object is not defined within scope\n");
+			check_arguments(top_scope, $1, $3, &i);
+			$$ = mktree(PROCEDURE_CALL, mkid(scope_search_all(top_scope, $1)), $3); 
+		}
 	;
+
+/* Tree Building below, above uses expressions */
 
 expression_list
 	: expression { $$ = $1; }
@@ -226,26 +290,52 @@ expression_list
 	;
 
 expression
-	: simple_expression { $$ = $1; }
+	: simple_expression 
+		{ $$ = $1; }
 	| simple_expression RELOP simple_expression 
-		{ $$ = mkop(RELOP, $2, $1, $3); }
+		{ $$ = mkop(RELOP, $2, $1, $3);	}
 	;
 
 simple_expression
-	: term 							{ $$ = $1; }
-	| ADDOP term					{ $$ = mkop(ADDOP,$1,$2,NULL); }
-	| simple_expression ADDOP term 	{ $$ = mkop(ADDOP,$2,$1,$3);  }
+	: term 							
+		{ $$ = $1; }
+	| ADDOP term					
+		{ $$ = mkop(ADDOP,$1,$2,NULL); }
+	| simple_expression ADDOP term 	
+		{ $$ = mkop(ADDOP,$2,$1,$3); }
 	;
 
-term
-	: factor 			{ $$ = $1; }
-	| term MULOP factor { $$ = mkop(MULOP,$2,$1,$3); } 
+term 
+	: factor 			
+		{ $$ = $1; }
+	| term MULOP factor 
+		{ $$ = mkop(MULOP,$2,$1,$3); } 
 	;
-	
-factor
-	: ID 							{ $$ = mkid(scope_search_all(top_scope, $1)); }
-	| ID '(' expression_list ')'	{ $$ = mktree(FUNCTION_CALL,mkid(scope_search_all(top_scope, $1)),$3); }
-	| ID '[' expression ']' 		{ $$ = mktree(ARRAY_ACCESS,mkid(scope_search_all(top_scope, $1)),$3); }
+
+factor 
+	: ID 							
+		{
+			if(!scope_is_defined(top_scope, $1)) 
+				yyerror("object is not defined within scope\n");
+			$$ = mkid(scope_search_all(top_scope, $1)); 
+		}
+	| ID '(' expression_list ')'	
+		{ 
+			int i = 1;
+			if(!scope_is_defined(top_scope, $1)) 
+				yyerror("object is not defined within scope\n");
+			check_arguments(top_scope, $1, $3, &i);
+			$$ = mktree(FUNCTION_CALL,mkid(scope_search_all(top_scope, $1)),$3); 
+		}
+	/* right-side of assignment operator */
+	| ID '[' expression_list ']' 		
+		{
+			int i = 0;
+			if(!scope_is_defined(top_scope, $1)) 
+				yyerror("object is not defined within scope\n");
+			check_array_index(top_scope, $1, $3, &i);
+			$$ = mktree(ARRAY_ACCESS,mkid(scope_search_all(top_scope, $1)),$3); 
+		}
 	| INUM						 	{ $$ = mkinum($1); }
 	| RNUM 							{ $$ = mkrnum($1); }
 	| '(' expression ')' 			{ $$ = $2; }
@@ -254,11 +344,14 @@ factor
 
 %%
 
-scope_t *top_scope;
+scope_t *top_scope, *tmp_scope;
+node_t *tmp;
+int line_number = 0;
 
 int main()
 {
 	top_scope = mkscope();
+	tmp = NULL;
 	yyparse();
 	return 0;
 }

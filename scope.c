@@ -5,6 +5,7 @@
 
 #include "scope.h"
 
+extern int yyerror(char *);
 int hashpjw( char *s );
 
 /****** Constructors/Destructors ******/
@@ -52,7 +53,9 @@ node_t *scope_search_all(scope_t *top, char *name)
 	scope_t *p = top;
 	node_t *tmp;
 	while(p != NULL){
-		if( ( tmp = scope_search(p, name)) != NULL ) return tmp;
+		if( ( tmp = scope_search(p, name)) != NULL ){
+			return tmp;
+		}
 		p = p->next;
 	}
 	return NULL;
@@ -62,7 +65,7 @@ node_t *scope_search(scope_t *top, char *name)
 {
 	assert(top != NULL);
 	int index = hashpjw(name);
-	node_t *tmp = top->table[index];
+	node_t *tmp = top->table[index]; 
 	return node_search(tmp, name);
 }
 
@@ -75,9 +78,18 @@ node_t *scope_insert(scope_t *top, char *name)
 	return top->table[index];
 }
 
+/* Checks for any redeclarations of variable names */
 void scope_redefinition(scope_t *top, char *name)
 {
-	if(scope_search(top, name) != NULL) yyerror("redeclaraction of variable");
+	if(scope_search(top, name) != NULL) 
+		yyerror("redeclaraction of variable");
+}
+
+/* Checks if variable/function/procedure was ever defined */
+bool scope_is_defined(scope_t *top, char *name)
+{
+	if(scope_search_all(top, name) != NULL) return 1;
+	else return 0;
 }
 
 /****** Hashpjw Function ******/

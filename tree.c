@@ -17,7 +17,7 @@ tree_t *mktree( int type, tree_t *left, tree_t *right )
 	tree_t *root = (tree_t *)malloc(sizeof(tree_t));
 	assert( root != NULL );
 	root->type = type;
-	root->left = left;
+	root->left = left;	
 	root->right = right;
 	return root;
 }
@@ -30,8 +30,9 @@ void tree_print( tree_t *root )
 /****** Specialized constructors ******/
 tree_t *mkid( node_t *s )
 {
+	assert(s != NULL);
 	tree_t *p = mktree(ID, NULL, NULL);
-	p->attribute.sVal = s; /* memory leak? */
+	p->attribute.sVal = s; 
 	return p;
 }
 
@@ -51,6 +52,7 @@ tree_t *mkrnum(float rVal)
 
 tree_t *mkop(int type, int opVal, tree_t *left, tree_t *right)
 {
+	/* Check what types are being passed here */
 	tree_t *p = mktree(type, left, right);
 	p->attribute.opVal = opVal;
 	return p;
@@ -97,6 +99,15 @@ void aux_tree_print( tree_t *t, int spaces )
 		case COMMA:
 			fprintf(stderr, "[COMMA]\n");
 			break;
+		case FOR:
+			fprintf(stderr, "[FOR]\n");
+			break;
+		case TO:
+			fprintf(stderr, "[TO]\n");
+			break;
+		case ELSE:
+			fprintf(stderr, "[ELSE]\n");
+			break;
 		case IF:
 			fprintf(stderr, "[IF]\n");
 			break;
@@ -109,11 +120,14 @@ void aux_tree_print( tree_t *t, int spaces )
 		case ASSIGNOP:
 			fprintf(stderr, "[ASSIGNOP]\n");
 			break;
-		default:		
+		case DOTDOT:
+			fprintf(stderr, "[DOTDOT]\n");
+			break;
+		default:	
+			/* If you hit this, might not have all cases covered */	
 			yyerror("Error in tree printing\n");
 			break;
 	}
-
 	aux_tree_print(t->left, spaces+4);
 	aux_tree_print(t->right, spaces+4);
 }

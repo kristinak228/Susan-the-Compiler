@@ -10,21 +10,24 @@
 extern char yychar;
 #define DEBUG 0
 
+void print_line_number();
+extern int line_number;
+
 /* Scanner File, p. 746 Apendix A */
 
 %}
 whitespace  [ \t]+ 
 number		[0-9]+
 ident		[A-Za-z][A-Za-z0-9]*
-comment1 	\{[^{]*\}
-comment2	\(\*.*\*\) 
+
+comment1		\(\*.*\*\)
+comment2	 	\{[^{]*\}
 
 %%
 
 {whitespace}	;
-{comment1}	{ /* fprintf(stderr, "%s", yytext); */ }
-{comment2}	{ /* fprintf(stderr, "%s", yytext); */ }
-
+{comment1}		{ fprintf(stderr, "%s", yytext); }
+{comment2}		{ fprintf(stderr, "%s", yytext); }
 
 "program"	{ fprintf(stderr, "[PROGRAM]"); 	return PROGRAM; }
 "var"		{ fprintf(stderr, "[VAR]"); 		return VAR; }
@@ -72,7 +75,7 @@ comment2	\(\*.*\*\)
 {ident}					{ fprintf(stderr, "[ID:%s]", yylval.sVal = strdup(yytext)); return ID; }
 
 ";" 		{ return yytext[0]; }
-"\n" 		{ fprintf(stderr, "\n"); } /* add line counting here */
+"\n" 		{ fprintf(stderr, "%s", yytext); print_line_number(); } 
 .			{ fprintf(stderr, "{%c}", yytext[0]); return yytext[0]; }
 
 %%
@@ -81,4 +84,11 @@ int yyerror( char *msg )
 {
 	fprintf(stderr, "\nError: %s\n", msg);
 	exit(1);
+
+}
+
+void print_line_number()
+{
+	++line_number;
+	fprintf(stderr, " %d ", line_number);
 }

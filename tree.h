@@ -6,12 +6,21 @@
 /****** Tree type structure ******/
 typedef struct tree_s 
 {
-	int type; 					/* token type: INUM RNUM ID RELOP ADDOP MULOP NOT.. */
+	int type; 					/*token type: INUM RNUM ID RELOP ADDOP MULOP NOT*/
+
 	union {
+		int type;				/* ID type */
+		char *name;				/* ID Name */
 		int iVal; 				/* INUM */
 		float rVal;				/* RNUM */
 		node_t *sVal; 			/* ID */
 		int opVal;				/* RELOP ADDOP MULOP */
+		int u_bound;			/* Array upper bound */
+		int l_bound;			/* Array lower bound */
+		int arr_size;			/* Array size */
+		int row, col;			/* Array row,col bounds */	
+		int l_bound2;			/* Array lower bound 2 */
+		int u_bound2;			/* Array upper bound 2*/
 	} attribute;
 	
 	struct tree_s 	*left;

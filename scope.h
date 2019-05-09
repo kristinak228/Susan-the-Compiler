@@ -26,5 +26,6 @@ node_t *scope_search_all(scope_t *top, char *name);
 node_t *scope_search(scope_t *top, char *name);
 node_t *scope_insert(scope_t *top, char *name);
 void scope_redefinition(scope_t *top, char *name);
+bool scope_is_defined(scope_t *top, char *name);
 
 #endif

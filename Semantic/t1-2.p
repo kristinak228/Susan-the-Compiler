@@ -2,11 +2,10 @@
 program main( input, output );
   var a,b: integer;
   procedure boo(a: integer);
-    var b: real;
+	var b: real;
   begin
-    b := 1.23 
+    b := 1.23
   end;
 begin
   boo(b)
 end.
-

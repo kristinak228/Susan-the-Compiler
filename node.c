@@ -16,11 +16,10 @@ node_t *mknode(char *s)
 	return newNode;
 }
 
-/****** Helpers ******/
+/****** Helper Functions ******/
 node_t *node_search(node_t *top, char *name)
 {
 	node_t *currNode = top;
-	
 	while(currNode != NULL){
 		if(strcmp(currNode->name, name) == 0) return currNode;
 		currNode = currNode->next;
@@ -38,7 +37,7 @@ node_t *node_insert(node_t *top, char *name)
 void node_print(node_t *top)
 {
 	node_t *currNode = top;
-	fprintf(stderr, "BEGNG LIST PRINT:\n");
+	fprintf(stderr, "BEGIN LIST PRINT:\n");
 	while(currNode != NULL){
 		fprintf(stderr, "[%s]", currNode->name);
 		currNode = currNode->next;
@@ -46,4 +45,3 @@ void node_print(node_t *top)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "END LIST PRINT\n");
 }
-

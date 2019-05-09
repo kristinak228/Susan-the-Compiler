@@ -2,12 +2,10 @@
 program main( input, output );
   var b: integer;
   var y: real;
-
+  {hello}
   procedure boo(a: integer; x: real);
   begin
   end;
 begin
-  boo(y,10);
-  boo(b,y,b)
+  boo(b,10.9)
 end.
-
